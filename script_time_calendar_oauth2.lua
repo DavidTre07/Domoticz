@@ -43,6 +43,8 @@ messages["en"]["Only found a comment in the action field"]="Only found a comment
 messages["fr"]["Only found a comment in the action field"]="Seulement trouvé un commentaire dans le champ action..."
 messages["en"]["Can't open Calendar file"]="Can't open calendar file"
 messages["fr"]["Can't open Calendar file"]="Impossible d'ouvrir le fichier du calendrier"
+messages["en"]["Script to run"]="Script to run"
+messages["fr"]["Script to run"]="Script a exécuter"
 -- END of MESSAGES
 
 printf = function(s,...) return print(id..s:format(...)) end   --prefix all print with the var: id
@@ -86,8 +88,15 @@ if fhnd then
         eventAction=eventActionFull:match("([^--]+)--")   --Remove comments in action field
         if debug then printf("%s --> currentTime: %s eventStart: %s eventEnd: %s Action: %s",messages[lang]["Processing"],currentTime,eventStart,eventEnd,eventAction) end
         if LUAevents and (eventAction:find("%(") or eventAction:find("%[")) then -- non-trivial LUA code
+          -- Translations
           eventScript = eventAction:gsub(";",",") -- subst the "," character
-          cA=commandArray od=otherdevices odsv=otherdevices_svalues -- abbreviations
+          eventScript = eventScript:gsub("cA","commandArray")
+          eventScript = eventScript:gsub("odsval","otherdevices_svalues")
+          eventScript = eventScript:gsub("odhum","otherdevices_humidity")
+          eventScript = eventScript:gsub("odtemp","otherdevices_temperature")
+          eventScript = eventScript:gsub("od","otherdevices")
+          -- End of Translations
+          if debug then printf("%s: %s",messages[lang]["Script to run"],eventScript) end
           sts,err = loadstring(eventScript)   -- Run the script
           if err ~= nil then   -- Error return ?
             printf("%s: %s",messages[lang]["Error"],err)
