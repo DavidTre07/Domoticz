@@ -1,0 +1,5 @@
+Standard action:
+VMC=Off
+
+Or with a script, test if Hygro is OK before switch off:
+if odhum["Salon_Temp_Hum"]<50 then cA["VMC"]="Off" else cA["VMC"]="On" if odhum["Salon_Temp_Hum"]>75 then cA["VMC_Vitesse_Rapide"]="On" end end
