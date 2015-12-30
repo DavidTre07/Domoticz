@@ -13,7 +13,7 @@
 
 -- VARIABLES
 id ="(CAL) "   -- Prefix to put on each messages
-debug = true   -- Debug mode: debug= true|false
+debug = false   -- Debug mode: debug= true|false
 LUAevents = true   -- Do we accept LUA code in the calendar ? LUAevents= true|false
 tmpdir = "/var/tmp/"   -- Where to put the temporary files
 calendarFilename="gcalcli.txt"   -- Where the cron put the calendar entries
