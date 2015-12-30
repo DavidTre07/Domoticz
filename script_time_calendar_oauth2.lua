@@ -1,14 +1,14 @@
 --[[
-	David Tre (david.tre07@gmail.com)
-	29/12/2015
-	Script developped after this wiki page was not working anymore https://www.domoticz.com/wiki/Interacting_with_Google_Calendar
-	
-	Before putting this script in the domoticz scripts folder take care that:
-		- gcalcli is installed and configured
-		- put a cron like this */10 * * * * /usr/local/bin/gcalcli agenda yesterday tomorrow --calendar Domoticz --military --tsv >/var/tmp/gcalcli.txt
-	Verify that you got a new /var/tmp/gcalcli.txt file every 10 minutes
-	If yes you are ready to go! (put this script in ~/domoticz/scripts/lua/script_time_calendar_oauth2.lua)
-	
+  David Tre (david.tre07@gmail.com)
+  29/12/2015
+  Script developped after this wiki page was not working anymore https://www.domoticz.com/wiki/Interacting_with_Google_Calendar
+  
+  Before putting this script in the domoticz scripts folder take care that:
+    - gcalcli is installed and configured
+    - put a cron like this */10 * * * * /usr/local/bin/gcalcli agenda yesterday tomorrow --calendar Domoticz --military --tsv >/var/tmp/gcalcli.txt
+  Verify that you got a new /var/tmp/gcalcli.txt file every 10 minutes
+  If yes you are ready to go! (put this script in ~/domoticz/scripts/lua/script_time_calendar_oauth2.lua)
+  
 --]]
 
 -- VARIABLES
@@ -70,8 +70,8 @@ now=os.date("*t")
 currentTime=now.year*100000000+now.month*1000000+now.day*10000+now.hour*100+now.min -- yymmddhhmm format
 --printf('%s',currentTime)
  
---Lines format: StartDate	StartTime	EndDate	EndTime	Event
--- Example: 2015-12-28	09:00	2015-12-28	13:00	VMC=off
+--Lines format: StartDate  StartTime  EndDate  EndTime  Event
+-- Example: 2015-12-28  09:00  2015-12-28  13:00  VMC=off
 calendarFile=tmpdir..calendarFilename fhnd,err=io.open(calendarFile)
 if fhnd then
   for line in fhnd:lines() do
@@ -79,13 +79,13 @@ if fhnd then
     eventStartDate, eventStartHour, eventEndDate, eventEndHour, eventActionFull=line:match("([^,]+)\t([^,]+)\t([^,]+)\t([^,]+)\t([^,]+)")  --We have only 5 fields !
     eventStart=tonumber(string.gsub(eventStartDate,"-","")..string.gsub(eventStartHour,":",""))   --Remove separators in date and time
     eventEnd=tonumber(string.gsub(eventEndDate,"-","")..string.gsub(eventEndHour,":",""))   --Join date and time for comparisons
-		
-		spos,epos=string.find(eventActionFull,"%-%-")   --find if the action field is only a comment (starting with --)
-		if(spos~=1) then   --If the action don't start with a comment we can process action field
-			if (currentTime>=eventStart and (currentTime<=eventEnd or eventStart>eventEnd)) then  --Are we in the time slot ?
-  		  eventAction=eventActionFull:match("([^--]+)--")   --Remove comments in action field
-	  	  if debug then printf("%s --> currentTime: %s eventStart: %s eventEnd: %s Action: %s",messages[lang]["Processing"],currentTime,eventStart,eventEnd,eventAction) end
-			  if LUAevents and (eventAction:find("%(") or eventAction:find("%[")) then -- non-trivial LUA code
+    
+    spos,epos=string.find(eventActionFull,"%-%-")   --find if the action field is only a comment (starting with --)
+    if(spos~=1) then   --If the action don't start with a comment we can process action field
+      if (currentTime>=eventStart and (currentTime<=eventEnd or eventStart>eventEnd)) then  --Are we in the time slot ?
+        eventAction=eventActionFull:match("([^--]+)--")   --Remove comments in action field
+        if debug then printf("%s --> currentTime: %s eventStart: %s eventEnd: %s Action: %s",messages[lang]["Processing"],currentTime,eventStart,eventEnd,eventAction) end
+        if LUAevents and (eventAction:find("%(") or eventAction:find("%[")) then -- non-trivial LUA code
           eventScript = eventAction:gsub(";",",") -- subst the "," character
           cA=commandArray od=otherdevices odsv=otherdevices_svalues -- abbreviations
           sts,err = loadstring(eventScript)   -- Run the script
@@ -95,33 +95,33 @@ if fhnd then
             LUAevent = true   -- OK script loaded
           end
         else   -- We are not in the case of a LUA code
-					spos,epos=eventAction:find("=")   -- In the action we have only a = ?
-					if (spos~=nil) then
-						spos,epos=eventAction:find("==")   -- or two == ?
-						if (spos~=nil) then
-							device,setting=eventAction:match("(%a+)==(%a+)")   -- Extract device and setting
-							forceAction=true
-						else
-							device,setting=eventAction:match("(%a+)=(%a+)")    -- Extract device and setting
-						end
-						if (otherdevices[device]~= nil) then   --Is the device exist ?
-							if forceAction or (otherdevices[device] ~= setting) then   -- if == (force state) or device not on the requested state
-								commandArray[device]=setting
-								printf("%s",line)
-							end
-						else   -- No the deice doesn't exist
-							printf("%s %s",messages[lang]["ERROR, This device doesn't exist"],device)
-						end
-					else   --No = and == ??? strange...
-						printf("%s: %s",messages[lang]["ERROR, I can not understand this action"],eventAction)
-					end
+          spos,epos=eventAction:find("=")   -- In the action we have only a = ?
+          if (spos~=nil) then
+            spos,epos=eventAction:find("==")   -- or two == ?
+            if (spos~=nil) then
+              device,setting=eventAction:match("(%a+)==(%a+)")   -- Extract device and setting
+              forceAction=true
+            else
+              device,setting=eventAction:match("(%a+)=(%a+)")    -- Extract device and setting
+            end
+            if (otherdevices[device]~= nil) then   --Is the device exist ?
+              if forceAction or (otherdevices[device] ~= setting) then   -- if == (force state) or device not on the requested state
+                commandArray[device]=setting
+                printf("%s",line)
+              end
+            else   -- No the deice doesn't exist
+              printf("%s %s",messages[lang]["ERROR, This device doesn't exist"],device)
+            end
+          else   --No = and == ??? strange...
+            printf("%s: %s",messages[lang]["ERROR, I can not understand this action"],eventAction)
+          end
         end
-			else
-				if debug then printf("%s",messages[lang]["Not in the time slot"]) end
-			end
-		else
-			if debug then printf("%s",messages[lang]["Only found a comment in the action field"]) end
-		end
+      else
+        if debug then printf("%s",messages[lang]["Not in the time slot"]) end
+      end
+    else
+      if debug then printf("%s",messages[lang]["Only found a comment in the action field"]) end
+    end
   end
   fhnd:close()
 else
