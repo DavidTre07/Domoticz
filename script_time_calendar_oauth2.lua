@@ -47,9 +47,9 @@ messages["en"]["Script to run"]="Script to run"
 messages["fr"]["Script to run"]="Script a exécuter"
 -- END of MESSAGES
 
-printf = function(s,...) return print(id..s:format(...)) end   --prefix all print with the var: id
+printf = function(s,...) return print(id..s:format(...)) end   -- Prefix all print with the var: id
  
-function loadstring(str,name) -- omit this function if your domoticz supports it natively
+function loadstring(str,name) -- Omit this function if your domoticz supports it natively
   local file = tmpdir..scriptFilename
   local f,err=io.open(file,"w")
   if not f then
@@ -68,8 +68,7 @@ end
 commandArray = {}
 LUAevent = false -- Flag for an LUA event has been processed
  
-now=os.date("*t")
-currentTime=now.year*100000000+now.month*1000000+now.day*10000+now.hour*100+now.min -- yymmddhhmm format
+currentTime=os.date("%Y%m%d%H%M") -- yyyymmddhhmm format
 --printf('%s',currentTime)
  
 --Lines format: StartDate  StartTime  EndDate  EndTime  Event
@@ -78,18 +77,18 @@ calendarFile=tmpdir..calendarFilename fhnd,err=io.open(calendarFile)
 if fhnd then
   for line in fhnd:lines() do
     if debug then printf("%s",line) end
-    eventStartDate, eventStartHour, eventEndDate, eventEndHour, eventActionFull=line:match("([^,]+)\t([^,]+)\t([^,]+)\t([^,]+)\t([^,]+)")  --We have only 5 fields !
-    eventStart=tonumber(string.gsub(eventStartDate,"-","")..string.gsub(eventStartHour,":",""))   --Remove separators in date and time
-    eventEnd=tonumber(string.gsub(eventEndDate,"-","")..string.gsub(eventEndHour,":",""))   --Join date and time for comparisons
+    eventStartDate, eventStartHour, eventEndDate, eventEndHour, eventActionFull=line:match("([^,]+)\t([^,]+)\t([^,]+)\t([^,]+)\t([^,]+)")  -- We have only 5 fields !
+    eventStart=tonumber(string.gsub(eventStartDate,"-","")..string.gsub(eventStartHour,":",""))   -- Remove separators in date and time
+    eventEnd=tonumber(string.gsub(eventEndDate,"-","")..string.gsub(eventEndHour,":",""))   -- Join date and time for comparisons
     
-    spos,epos=string.find(eventActionFull,"%-%-")   --find if the action field is only a comment (starting with --)
-    if(spos~=1) then   --If the action don't start with a comment we can process action field
-      if (currentTime>=eventStart and (currentTime<=eventEnd or eventStart>eventEnd)) then  --Are we in the time slot ?
-        eventAction=eventActionFull:match("([^--]+)--")   --Remove comments in action field
+    spos,epos=string.find(eventActionFull,"%-%-")   -- Find if the action field is only a comment (starting with --)
+    if(spos~=1) then   -- If the action don't start with a comment we can process action field
+      if (currentTime>=eventStart and (currentTime<=eventEnd or eventStart>eventEnd)) then  -- Are we in the time slot ?
+        eventAction=eventActionFull:match("([^--]+)--")   -- Remove comments in action field
         if debug then printf("%s --> currentTime: %s eventStart: %s eventEnd: %s Action: %s",messages[lang]["Processing"],currentTime,eventStart,eventEnd,eventAction) end
-        if LUAevents and (eventAction:find("%(") or eventAction:find("%[")) then -- non-trivial LUA code
+        if LUAevents and (eventAction:find("%(") or eventAction:find("%[")) then -- Non-trivial LUA code
           -- Translations
-          eventScript = eventAction:gsub(";",",") -- subst the "," character
+          eventScript = eventAction:gsub(";",",") -- Subst the "," character
           eventScript = eventScript:gsub("cA","commandArray")
           eventScript = eventScript:gsub("odsval","otherdevices_svalues")
           eventScript = eventScript:gsub("odhum","otherdevices_humidity")
@@ -113,7 +112,7 @@ if fhnd then
             else
               device,setting=eventAction:match("(%a+)=(%a+)")    -- Extract device and setting
             end
-            if (otherdevices[device]~= nil) then   --Is the device exist ?
+            if (otherdevices[device]~= nil) then   -- Is the device exist ?
               if forceAction or (otherdevices[device] ~= setting) then   -- if == (force state) or device not on the requested state
                 commandArray[device]=setting
                 printf("%s",line)
@@ -121,7 +120,7 @@ if fhnd then
             else   -- No the deice doesn't exist
               printf("%s %s",messages[lang]["ERROR, This device doesn't exist"],device)
             end
-          else   --No = and == ??? strange...
+          else   -- No = and == ??? strange...
             printf("%s: %s",messages[lang]["ERROR, I can not understand this action"],eventAction)
           end
         end
