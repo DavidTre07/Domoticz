@@ -68,7 +68,7 @@ end
 commandArray = {}
 LUAevent = false -- Flag for an LUA event has been processed
  
-currentTime=os.date("%Y%m%d%H%M") -- yyyymmddhhmm format
+currentTime=tonumber(os.date("%Y%m%d%H%M")) -- yyyymmddhhmm format
 --printf('%s',currentTime)
  
 --Lines format: StartDate  StartTime  EndDate  EndTime  Event
