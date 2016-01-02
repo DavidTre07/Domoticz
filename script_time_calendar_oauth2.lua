@@ -33,8 +33,8 @@ messages["en"]["Error"]="Error"
 messages["fr"]["Error"]="Erreur"
 messages["en"]["Processing"]="Processing"
 messages["fr"]["Processing"]="Traitement"
-messages["en"]["ERROR, This device doesn't exist"]="ERROR, This device doesn't exist"
-messages["fr"]["ERROR, This device doesn't exist"]="ERREUR, Ce périphérique n'existe pas"
+messages["en"]["ERROR, This device or user variable doesn't exist"]="ERROR, This device or user variable doesn't exist"
+messages["fr"]["ERROR, This device or user variable doesn't exist"]="ERREUR, Ce périphérique ou cette variable n'existe pas"
 messages["en"]["ERROR, I can not understand this action"]="ERROR, I can not understand this action"
 messages["fr"]["ERROR, I can not understand this action"]="ERREUR, Je ne comprends pas cette action"
 messages["en"]["Not in the time slot"]="Not in the time slot"
@@ -103,24 +103,28 @@ if fhnd then
             LUAevent = true   -- OK script loaded
           end
         else   -- We are not in the case of a LUA code
-          spos,epos=eventAction:find("=")   -- In the action we have only a = ?
-          if (spos~=nil) then
-            spos,epos=eventAction:find("==")   -- or two == ?
-            if (spos~=nil) then
-              device,setting=eventAction:match("(%a+)==(%a+)")   -- Extract device and setting
+          _trash,numberOfEqual=eventAction:gsub("(=)","%1")   -- In the action we have a = ?
+          if (numberOfEqual~=0) then   -- OK we found one or more =
+            _trash,numberOfDoubleEqual=eventAction:gsub("(==)","%1")   -- Do we have the == sequence ?
+            if (numberOfDoubleEqual~=0) then   -- OK we found one or more ==
+              device,newSetting=eventAction:match("(.+)==(.+)")   -- Extract device and newSetting
               forceAction=true
-            else
-              device,setting=eventAction:match("(%a+)=(%a+)")    -- Extract device and setting
+            else   -- No == detected
+              device,newSetting=eventAction:match("(.+)=(.+)")    -- Extract device and newSetting
             end
             if (otherdevices[device]~= nil) then   -- Is the device exist ?
-              if forceAction or (otherdevices[device] ~= setting) then   -- if == (force state) or device not on the requested state
-                commandArray[device]=setting
-                printf("%s",line)
+              if forceAction or (otherdevices[device] ~= newSetting) then   -- if == (force state) or device not on the requested state
+                commandArray[device]=newSetting   -- OK we apply the new command
               end
-            else   -- No the deice doesn't exist
-              printf("%s %s",messages[lang]["ERROR, This device doesn't exist"],device)
+            else   -- No the device doesn't exist
+              if (uservariables[device]~= nill) then   -- Is a user variable with this name exist ?
+                if (type(uservariables[device])=="number") then actualSetting=tostring(uservariables[device]) else actualSetting=uservariables[device] end
+                if (actualSetting~=newSetting) then commandArray['Variable:'..device]=newSetting end
+              else
+                printf("%s %s",messages[lang]["ERROR, This device or user variable doesn't exist"],device)
+              end
             end
-          else   -- No = and == ??? strange...
+          else   -- No = sign, strange...
             printf("%s: %s",messages[lang]["ERROR, I can not understand this action"],eventAction)
           end
         end
@@ -136,6 +140,6 @@ else
   printf("%s: %s (%s)",messages[lang]["Can't open Calendar file"],calendarFile,err)
 end
  
-if debug or LUAevent then for i,v in pairs(commandArray) do printf("commandArray[%q] =  %q",i,v) end end
+for i,v in pairs(commandArray) do printf("commandArray[%q] =  %q",i,v) end
  
 return commandArray
