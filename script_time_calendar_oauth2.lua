@@ -67,7 +67,6 @@ function loadstring(str,name) -- Omit this function if your domoticz supports it
 end
  
 commandArray = {}
-LUAevent = false -- Flag for an LUA event has been processed
  
 currentTime=tonumber(os.date("%Y%m%d%H%M")) -- yyyymmddhhmm format
 --printf('%s',currentTime)
@@ -100,8 +99,6 @@ if fhnd then
           sts,err = loadstring(eventScript)   -- Run the script
           if err ~= nil then   -- Error return ?
             printf("%s: %s",messages[lang]["Error"],err)
-          else
-            LUAevent = true   -- OK script loaded
           end
         else   -- We are not in the case of a LUA code
           _trash,numberOfEqual=eventAction:gsub("(=)","%1")   -- In the action we have a = ?
