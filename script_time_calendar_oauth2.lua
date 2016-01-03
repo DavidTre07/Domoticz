@@ -9,6 +9,7 @@
   Verify that you got a new /var/tmp/gcalcli.txt file every 10 minutes
   If yes you are ready to go! (put this script in ~/domoticz/scripts/lua/script_time_calendar_oauth2.lua)
   
+  03/01/2015: Added the possibility to put multiple actions in one schedule, each command separated with a semicolon: Device1=On;Device2==On;User_Var3=1"
 --]]
 
 -- VARIABLES
@@ -104,24 +105,22 @@ if fhnd then
           end
         else   -- We are not in the case of a LUA code
           _trash,numberOfEqual=eventAction:gsub("(=)","%1")   -- In the action we have a = ?
-          if (numberOfEqual~=0) then   -- OK we found one or more =
-            _trash,numberOfDoubleEqual=eventAction:gsub("(==)","%1")   -- Do we have the == sequence ?
-            if (numberOfDoubleEqual~=0) then   -- OK we found one or more ==
-              device,newSetting=eventAction:match("(.+)==(.+)")   -- Extract device and newSetting
-              forceAction=true
-            else   -- No == detected
-              device,newSetting=eventAction:match("(.+)=(.+)")    -- Extract device and newSetting
-            end
-            if (otherdevices[device]~= nil) then   -- Is the device exist ?
-              if forceAction or (otherdevices[device] ~= newSetting) then   -- if == (force state) or device not on the requested state
-                commandArray[device]=newSetting   -- OK we apply the new command
-              end
-            else   -- No the device doesn't exist
-              if (uservariables[device]~= nill) then   -- Is a user variable with this name exist ?
-                if (type(uservariables[device])=="number") then actualSetting=tostring(uservariables[device]) else actualSetting=uservariables[device] end
-                if (actualSetting~=newSetting) then commandArray['Variable:'..device]=newSetting end
-              else
-                printf("%s %s",messages[lang]["ERROR, This device or user variable doesn't exist"],device)
+          if (numberOfEqual~=0) then   -- OK we found at least one =
+            for device,newSetting in string.gmatch(eventAction,"([^;]+)[==|=]([^;]+)") do
+              forceAction=false
+              device,nbEqual=device:gsub("(=)","")
+              if(nbEqual~=0) then forceAction=true end   -- Remaining a = in device name ? then we are in force mode
+              if (otherdevices[device]~= nil) then   -- Is the device exist ?
+                if forceAction or (otherdevices[device] ~= newSetting) then   -- if == (force state) or device not on the requested state
+                  commandArray[device]=newSetting   -- OK we apply the new command
+                end
+              else   -- No the device doesn't exist
+                if (uservariables[device]~= nill) then   -- Is a user variable with this name exist ?
+                  if (type(uservariables[device])=="number") then actualSetting=tostring(uservariables[device]) else actualSetting=uservariables[device] end
+                  if (actualSetting~=newSetting) then commandArray['Variable:'..device]=newSetting end
+                else
+                  printf("%s %s",messages[lang]["ERROR, This device or user variable doesn't exist"],device)
+                end
               end
             end
           else   -- No = sign, strange...
